@@ -1,147 +1,154 @@
-DevOps Project
-Intro to the project
-Example University is preparing for the new school year. The admissions department has received complaints that their web application for student records is slow or not available during the peak admissions period because of the high number of inquiries.
-Our challenge is to plan, design, build, and deploy the web application to the AWS Cloud in a way that is consistent with best practices of the AWS Well-Architected Framework. 
-This project demonstrates a proof of concept (POC) to host a student records web application in the AWS Cloud. The objective is to improve the experience for users by ensuring the application is highly available, scalable, load balanced, secure, and high performing.
+# DevOps Project
 
+## Intro to the project
+Example University is preparing for the new school year. The admissions department has received complaints that their web application for student records is slow or not available during the peak admissions period because of the high number of inquiries. Our challenge is to plan, design, build, and deploy the web application to the AWS Cloud in a way that is consistent with best practices of the AWS Well-Architected Framework. This project demonstrates a proof of concept (POC) to host a student records web application in the AWS Cloud. The objective is to improve the experience for users by ensuring the application is highly available, scalable, load balanced, secure, and high performing.
 
- 
-Homepage:
-(./homepage.jpg)
- 
-List of students:
-(./ListOfStudents.jpg)
+### Homepage
+![Homepage](./homepage.jpg)
 
-Phase 1: Planning the design and estimating cost
+### List of students
+![List of Students](./ListOfStudents.jpg)
+
+## Phase 1: Planning the design and estimating cost
 In the first phase of the project, we developed our initial plan and created an infrastructure diagram. We also estimated the cost of the proposed solution using the AWS Pricing Calculator.
 
+### Diagram one: Phase 2
+![Diagram Phase 2](./Diagram_phase2_DevOps_project_group12.jpg)
 
+### Diagram two: Phase 3
+![Diagram Phase 3](./phase3_DevOps_project_group12.jpg)
 
- 
-Diagram one: Phase 2
-(./Diagram_phase2_DevOps_project_group12.jpg)
- 
-Diagram two: Phase 3
-(./phase3_DevOps_project_group12.jpg)
- 
-Diagram three: Phase 4 - final diagram
-(./phase4_DevOps_project_group12.jpg)
+### Diagram three: Phase 4 - final diagram
+![Diagram Phase 4](./phase4_DevOps_project_group12.jpg)
 
- Estimated costs (Complete Estimated Cost file can be found in Docs folder)
- (./costEstimate.jpg)
+### Estimated costs
+![Estimated Costs](./costEstimate.jpg)
 
-Phase 2: Creating a basic functional web application
-Task 1: Creating a Virtual Network
+*(Complete Estimated Cost file can be found in Docs folder)*
 
-1. Create a VPC
-Creating a Virtual Private Cloud (VPC) provides an isolated network environment to host our resources securely.
-We created a VPC (project-vpc) with the Ipv4 CIDR block 10.0.0.0/16. This provides a large address space for our VPC, allowing for many subnets and resources. 
-2. Enable DNS Hostnames for VPC
-Next, we enabled DNS hostnames for our VPC. Enabling DNS hostname ensures that instances launched within the VPC can resolve and be resolved by DNS. 
-3. Create Subnets
-Then we created four subnets, two public subnets and two private subnets in two different regions (us-east-1a and us-east-1b). Subnets divide the VPC into smaller, manageable segments, allowing for better organization and security.
-	Subnet Private 1:
-	VPC: project-VPC
-	Subnet name: Private 1
-	Availability Zone: us-east-1a
-	IPv4 CIDR block: 10.0.1.0/24 (A smaller segment within the VPC for organizational purposes)
-	Subnet Public 1:
-	VPC: project-VPC
-	Subnet name: Public 1
-	Availability Zone: us-east-1a
-	IPv4 CIDR block: 10.0.0.0/24
-	Subnet Private 2:
-	VPC: project-VPC
-	Subnet name: Private 2
-	Availability Zone: us-east-1b
-	IPv4 CIDR block: 10.0.3.0/24
-	Subnet Public 2:
-	VPC: project-VPC
-	Subnet name: Public 2
-	Availability Zone: us-east-1b
-	IPv4 CIDR block: 10.0.2.0/24
-4. Enable Auto-Assign Public IPv4 on Public Subnet 1 
-Auto-assigning public IP addresses allows instances in public subnets to be accessible from the internet.
-5. Create an Internet Gateway
-An Internet Gateway allows communication between instances in our VPC and the internet. We created internet gateway and attached it to our project-vpc
-6. Create and Configure Route Tables
-Route tables control the traffic flow within the VPC. Public subnets need routes to the Internet Gateway to handle internet traffic. We created route table for public subnets first, attached it to our project-vpc and attached both our public subnets. Then we added a new route to Internet Gateway (0.0.0.0/0) which we created previously. This route directs all traffic destined for the internet to the internet gateway.
-7. Create a NAT Gateway
-A NAT Gateway allows instances in private subnets to access the internet for updates and other outbound connections while remaining inaccessible from the internet, enhancing security. We created new Nat gateway and we attached it to our public subnet 1 (Region: us-east-1a) and enabled Elastic IP allocation ID. An Elastic IP ensures a consistent IP address for the NAT Gateway. 
-8. Create and Configure a Route Table for Private Subnets
-Private subnets need routes to the NAT Gateway for outbound internet traffic, keeping instances secure by not exposing them directly to the internet. Then we created new route table for our private subnets, attached it to our project-vpc and attached both our private subnets. Then for this route table, we added new route to our previously created NAT Gateway (0.0.0.0/0). This route allows instances in the private subnets to access the internet through the NAT Gateway.
+## Phase 2: Creating a basic functional web application
 
-9. Create a Security Group
-Security groups act as virtual firewalls, controlling inbound and outbound traffic to and from instances, ensuring only authorized traffic can access the resources. 
-We created new security group (project-sg), attached it to our project-vpc and created two inbound rules within it:
-	Inbound rule 1:
-o	Type: HTTP
-o	Protocol: TCP
-o	Port range: 80
-o	Source: Anywhere-IPv4 (0.0.0.0/0) (This rule is broad and should be refined based on specific security needs)
-	Inbound rule 2:
-o	Type: mysql/AURORA
-o	Protocol: TCP
-o	Port range: 3306
-o	Source: Custom (10.0.0.0/16)
-Task 2: Creating a virtual machine
-In this task we are creating a EC2 instance. EC2 instances are virtual servers that host the web application. Proper configuration ensures they can serve web traffic and interact with other AWS services securely. 
-1.	Launch an EC2 Instance
-For our EC2 instance we choose the following details: 
-•	Name: Instance-1
-•	AMI: Ubuntu
-•	Key pair: Vockey
-In the network settings:
-•	VPC: project-VPC
-•	Subnet: Subnet Public 1 (The public subnet to ensure the instance can communicate with the internet directly.)
-•	Auto-assign public IP: Enable (Enabling this ensures the instance gets a public IP address, allowing it to be accessed from the internet.)
-•	Security group: Select project-sg (Security groups act as a virtual firewall for our instance to control inbound and outbound traffic.)
-For advanced details: Choose Metadata version to be V1 and V2(token optional) and added user script in the User data field.
-Task 3: Testing the deployment
-In this task we are accessing the instance we previously created via its Public IPv4 DNS which allows us to interact with the web application hosted on the instance. The Public IPv4 DNS is the address we will use to access our instance over the internet.
-Phase 3: Decoupling the Application Components
+### Task 1: Creating a Virtual Network
 
+1. **Create a VPC:**  
+   Creating a Virtual Private Cloud (VPC) provides an isolated network environment to host our resources securely. We created a VPC (project-vpc) with the IPv4 CIDR block 10.0.0.0/16. This provides a large address space for our VPC, allowing for many subnets and resources.
+
+2. **Enable DNS Hostnames for VPC:**  
+   Enabling DNS hostnames ensures that instances launched within the VPC can resolve and be resolved by DNS.
+
+3. **Create Subnets:**  
+   We created four subnets, two public subnets and two private subnets in two different regions (us-east-1a and us-east-1b). Subnets divide the VPC into smaller, manageable segments, allowing for better organization and security.
+   - Subnet Private 1:  
+     - VPC: project-VPC  
+     - Subnet name: Private 1  
+     - Availability Zone: us-east-1a  
+     - IPv4 CIDR block: 10.0.1.0/24  
+
+   - Subnet Public 1:  
+     - VPC: project-VPC  
+     - Subnet name: Public 1  
+     - Availability Zone: us-east-1a  
+     - IPv4 CIDR block: 10.0.0.0/24  
+
+   - Subnet Private 2:  
+     - VPC: project-VPC  
+     - Subnet name: Private 2  
+     - Availability Zone: us-east-1b  
+     - IPv4 CIDR block: 10.0.3.0/24  
+
+   - Subnet Public 2:  
+     - VPC: project-VPC  
+     - Subnet name: Public 2  
+     - Availability Zone: us-east-1b  
+     - IPv4 CIDR block: 10.0.2.0/24  
+
+4. **Enable Auto-Assign Public IPv4 on Public Subnet 1:**  
+   Auto-assigning public IP addresses allows instances in public subnets to be accessible from the internet.
+
+5. **Create an Internet Gateway:**  
+   An Internet Gateway allows communication between instances in our VPC and the internet. We created an internet gateway and attached it to our project-vpc.
+
+6. **Create and Configure Route Tables:**  
+   Route tables control the traffic flow within the VPC. Public subnets need routes to the Internet Gateway to handle internet traffic. We created route tables for public subnets first, attached them to our project-vpc and attached both our public subnets. Then we added a new route to the Internet Gateway (0.0.0.0/0) which we created previously. This route directs all traffic destined for the internet to the internet gateway.
+
+7. **Create a NAT Gateway:**  
+   A NAT Gateway allows instances in private subnets to access the internet for updates and other outbound connections while remaining inaccessible from the internet, enhancing security. We created a new NAT gateway and attached it to our public subnet 1 (Region: us-east-1a) and enabled Elastic IP allocation ID. An Elastic IP ensures a consistent IP address for the NAT Gateway.
+
+8. **Create and Configure a Route Table for Private Subnets:**  
+   Private subnets need routes to the NAT Gateway for outbound internet traffic, keeping instances secure by not exposing them directly to the internet. We created a new route table for our private subnets, attached it to our project-vpc and attached both our private subnets. Then for this route table, we added a new route to our previously created NAT Gateway (0.0.0.0/0). This route allows instances in the private subnets to access the internet through the NAT Gateway.
+
+9. **Create a Security Group:**  
+   Security groups act as virtual firewalls, controlling inbound and outbound traffic to and from instances, ensuring only authorized traffic can access the resources. We created a new security group (project-sg), attached it to our project-vpc and created two inbound rules within it:
+   - Inbound rule 1:  
+     - Type: HTTP  
+     - Protocol: TCP  
+     - Port range: 80  
+     - Source: Anywhere-IPv4 (0.0.0.0/0)  
+
+   - Inbound rule 2:  
+     - Type: MySQL/AURORA  
+     - Protocol: TCP  
+     - Port range: 3306  
+     - Source: Custom (10.0.0.0/16)  
+
+### Task 2: Creating a virtual machine
+In this task, we are creating an EC2 instance. EC2 instances are virtual servers that host the web application. Proper configuration ensures they can serve web traffic and interact with other AWS services securely.
+
+1. **Launch an EC2 Instance:**  
+   For our EC2 instance, we chose the following details:
+   - Name: Instance-1
+   - AMI: Ubuntu
+   - Key pair: Vockey
+
+   In the network settings:
+   - VPC: project-VPC
+   - Subnet: Subnet Public 1 (The public subnet to ensure the instance can communicate with the internet directly.)
+   - Auto-assign public IP: Enable (Enabling this ensures the instance gets a public IP address, allowing it to be accessed from the internet.)
+   - Security group: Select project-sg (Security groups act as a virtual firewall for our instance to control inbound and outbound traffic.)
+
+   For advanced details: Choose Metadata version to be V1 and V2 (token optional) and added a user script in the User data field.
+
+### Task 3: Testing the deployment
+In this task, we are accessing the instance we previously created via its Public IPv4 DNS which allows us to interact with the web application hosted on the instance. The Public IPv4 DNS is the address we will use to access our instance over the internet.
+
+## Phase 3: Decoupling the Application Components
 In this phase, we aim to separate the database and web server infrastructure so that they run independently. The web application will run on a separate virtual machine, while the database will run on the managed service infrastructure.
 
-Task 1: Changing the VPC Configuration
-Update the virtual network components to support hosting the database separately from the application. Note: We needed private subnets in a minimum of two Availability Zones.
+### Task 1: Changing the VPC Configuration
+Update the virtual network components to support hosting the database separately from the application. Note: We needed private subnets in a minimum of two Availability Zones. We created those subnets and enabled DNS Hostnames for VPC in the previous phase. Private subnets ensure that instances running within them are not directly accessible from the internet, enhancing security. Enabling DNS hostnames allows instances within the VPC to resolve and be resolved by DNS, which is crucial for communication between components.
 
-We created those subnets and enabled DNS Hostnames for VPC in the previous phase. 
-Private subnets ensure that instances running within them are not directly accessible from the internet, enhancing security.
-Enabling DNS hostnames allows instances within the VPC to resolve and be resolved by DNS, which is crucial for communication between components.
+### Task 2: Creating and Configuring the Amazon RDS Database
+In this task, we created an Amazon Relational Database Service (Amazon RDS) database that runs a MySQL engine.
+
+1. **Create a Database Subnet Group:**  
+   First, we have to create a subnet group. Attach it to our project-vpc and choose both availability zones (us-east-12, us-east-1b) and both private subnets from each availability zone. A DB subnet group is a collection of subnets that Amazon RDS uses to allocate resources within a VPC. Ensuring that subnets are private enhances security.
 
 
-Task 2: Creating and Configuring the Amazon RDS Database
-In this task we created an Amazon Relational Database Service (Amazon RDS) database that runs a MySQL engine.
-1.	Create a Database Subnet Group:
-First we have to create subnet group. Attach it to our project-vpc and we choose both availability zones (us-east-12, us-east-1b) and both private subnets from each availability zone. A DB subnet group is a collection of subnets that Amazon RDS uses to allocate resources within a VPC. Ensuring that subnets are private enhances security.
+2. **Create an RDS Database:**  
+   - Selected Standard create.
+   - Choose MySQL.
+   - Under Production, selected Multi-AZ DB instance. (Multi-AZ deployment provides high availability and failover support for the database.)
+   - Set the DB instance identifier: STUDENTS
+   - Set the MASTER username and password.
+   - Under Credentials management, choose Self managed.
+   - Under DB instance class, selected Burstable classes (includes t classes) and choose db.t3.micro. (Choosing a burstable instance class allows cost-effective operation with the ability to handle variable workloads.)
+   - Under Storage type, select General Purpose SSD (gp2).
+   - Set Allocated storage to 20 GiB.
+   - Under Connectivity, choose project-VPC, subnet group and selected the project-sg security group.
+   - Disabled Enhanced monitoring.
+   - Disabled Deletion protection.
+   - In Additional configuration, add initial database name, disabled encryption, disabled auto minor version upgrade and disabled deletion protection.
 
-2.	Create an RDS Database:
-	Then we create RDS database with following details: 
-	Selected Standard create.
-	Choose MySQL.
-	Under Production, selected Multi-AZ DB instance. (Multi-AZ deployment provides high availability and failover support for the database.)
-	Set the DB instance identifier: STUDENTS
-	Set the MASTER username and password.
-	Under Credentials management choose Self managed
-	Under DB instance class, selected Burstable classes (includes t classes) and choose db.t3.micro. (Choosing a burstable instance class allows cost-effective operation with the ability to handle variable workloads.)
-	Under Storage type, select General Purpose SSD (gp2).
-	Set Allocated storage to 20 GiB.
-	Under Connectivity, choose project-VPC, subnet group and selected the project-sg security group.
-	Disabled Enhanced monitoring.
-	Disabled Deletion protection.
-	In Additional configuration add initial database name, disabled encryption, disabled auto minor version upgrade and disabled deletion protection.
-
-Task 3: Configuring the Development Environment1
+### Task 3: **Configuring the Development Environment1**
 Provisioned an AWS Cloud9 environment to run AWS Command Line Interface (AWS CLI) commands that will be used in later tasks.
 1.	Open AWS Cloud9 and Create an Environment:
 For environment on Cloud9 (project-c9) we choose from additional instance types t3.micro, for Network settings selected Secure Shell (SSH), attached project-vpc and subnet public 1. 
 By placing our Cloud9 environment in a public subnet, we have direct access to the internet. Instances in a public subnet can be accessed directly using their public IP addresses. This can be useful for quickly accessing environment from various locations.
 2.	Edit the Cloud9 Script:
-	Once the RDS instance is created, edit the Cloud9 script to include the database endpoint.
-	Including the RDS endpoint in the script allows the environment to connect to the database for further tasks and operations.
+    -	Once the RDS instance is created, edit the Cloud9 script to include the database endpoint.
+    -	Including the RDS endpoint in the script allows the environment to connect to the database for further tasks and operations.
 
-Task 4: Provisioning Secrets Manager
+### Task 4: **Provisioning Secrets Manager**
 Secrets Manager is used to store secrets for the database. We can add it manually, or we can use the C9 console and the following command:
   aws secretsmanager create-secret \
     --name Mydbsecret \
@@ -152,22 +159,22 @@ This command creates a secret in AWS Secrets Manager to securely store the datab
 
 We can check if our command is successful, by opening the Secrets Manager in AWS CLI and seeing that Mydbsecret is showing on the secrets section. Verifying the secret ensures it has been successfully created and can be used for secure database access.
 
-Task 5: Provisioning a New Instance for the Web Server
+### Task 5: **Provisioning a New Instance for the Web Server**
 In this task we created a new virtual machine to host the web application.
 1.	Launch an EC2 Instance for Public Subnet 2:
-•	Name: instance-2
-•	AMI: Ubuntu
-•	Instance type: t2.micro (A t2.micro instance is cost-effective for a small web application.)
-•	Key pair: vockey
-•	Network settings:
-	VPC: project-VPC
-	Subnet: Subnet Public 2 (We were following best practices for designing highly available, fault-tolerant and resilient applications, by launching the new EC2 instance in Subnet Public 2. This strategic deployment ensures that our web application can handle failures and continue to serve users without significant interruptions.
-	Auto-assign public IP: Enable
-	Security group: Select project-sg
-•	Advanced details:
-	Select IAM instance profile: LabInstanceProfile
-	Enable V1 and V2 (token optional)
-	Add our user script in the User data field
+  -	Name: instance-2
+  -	AMI: Ubuntu
+  -	Instance type: t2.micro (A t2.micro instance is cost-effective for a small web application.)
+  -	Key pair: vockey
+  -	Network settings:
+      -	VPC: project-VPC
+      -	Subnet: Subnet Public 2 (We were following best practices for designing highly available, fault-tolerant and resilient applications, by launching the new EC2 instance in Subnet Public 2. This strategic deployment ensures that our web application can handle failures and continue to serve users without significant interruptions.
+      -	Auto-assign public IP: Enable
+      -	Security group: Select project-sg
+  -	Advanced details:
+      -	Select IAM instance profile: LabInstanceProfile
+      -	Enable V1 and V2 (token optional)
+      -	Add our user script in the User data field
 
 2.	Configure RDS in Cloud9:
 •	Selected the newly created database instance.
