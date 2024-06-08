@@ -7,10 +7,10 @@ This project demonstrates a proof of concept (POC) to host a student records web
 
  
 Homepage:
-("./homepage.jpg")
+(./homepage.jpg)
  
 List of students:
-("./ListOfStudents.jpg")
+(./ListOfStudents.jpg)
 
 Phase 1: Planning the design and estimating cost
 In the first phase of the project, we developed our initial plan and created an infrastructure diagram. We also estimated the cost of the proposed solution using the AWS Pricing Calculator.
@@ -19,16 +19,16 @@ In the first phase of the project, we developed our initial plan and created an 
 
  
 Diagram one: Phase 2
-("./Diagram_phase2_DevOps_project_group12.jpg")
+(./Diagram_phase2_DevOps_project_group12.jpg)
  
 Diagram two: Phase 3
-("./phase3_DevOps_project_group12.jpg")
+(./phase3_DevOps_project_group12.jpg)
  
 Diagram three: Phase 4 - final diagram
-("./phase4_DevOps_project_group12.jpg")
+(./phase4_DevOps_project_group12.jpg)
 
  Estimated costs (Complete Estimated Cost file can be found in Docs folder)
- ("./costEstimate.jpg")
+ (./costEstimate.jpg)
 
 Phase 2: Creating a basic functional web application
 Task 1: Creating a Virtual Network
