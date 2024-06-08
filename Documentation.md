@@ -150,10 +150,11 @@ By placing our Cloud9 environment in a public subnet, we have direct access to t
 
 ### Task 4: **Provisioning Secrets Manager**
 Secrets Manager is used to store secrets for the database. We can add it manually, or we can use the C9 console and the following command:
-  aws secretsmanager create-secret \
-    --name Mydbsecret \
-    --description "Database secret for web app" \
-    --secret-string "{\"user\":\"<username>\",\"password\":\"<password>\",\"host\":\"<RDS Endpoint>\",\"db\":\"<dbname>\"}"
+
+aws secretsmanager create-secret \
+  --name Mydbsecret \
+  --description "Database secret for web app" \
+  --secret-string "{\"user\":\"<username>\",\"password\":\"<password>\",\"host\":\"<RDS Endpoint>\",\"db\":\"<dbname>\"}"
 
 This command creates a secret in AWS Secrets Manager to securely store the database credentials (We replace the placeholders with our actual values).
 
@@ -168,7 +169,7 @@ In this task we created a new virtual machine to host the web application.
   -	Key pair: vockey
   -	Network settings:
       -	VPC: project-VPC
-      -	Subnet: Subnet Public 2 (We were following best practices for designing highly available, fault-tolerant and resilient applications, by launching the new EC2 instance in Subnet Public 2. This strategic deployment ensures that our web application can handle failures and continue to serve users without significant interruptions.
+      -	Subnet: Subnet Public 2 (We were following best practices for designing highly available, fault-tolerant and resilient applications, by launching the new EC2 instance in Subnet Public 2. This strategic deployment ensures that our web application can handle failures and continue to serve users without significant interruptions.)
       -	Auto-assign public IP: Enable
       -	Security group: Select project-sg
   -	Advanced details:
@@ -177,112 +178,123 @@ In this task we created a new virtual machine to host the web application.
       -	Add our user script in the User data field
 
 2.	Configure RDS in Cloud9:
-•	Selected the newly created database instance.
-•	Copy the Public IPv4 DNS of the RDS instance.
-•	Edited our Cloud9 script to include the RDS instance endpoint.
+  -	Selected the newly created database instance.
+  -	Copy the Public IPv4 DNS of the RDS instance.
+  -	Edited our Cloud9 script to include the RDS instance endpoint.
 Configuring the RDS endpoint in Cloud9 allows the development environment to connect to the database, facilitating further development and testing tasks.
-Task 6: Migrating the database
+
+### Task 6: **Migrating the database**
 Migrate the data from the original database, which is on an EC2 instance, to the new Amazon RDS database.
 1.	Run the Migration Script in Cloud9:
-	Ran the following command in the terminal:
-•	mysql -h project-db.cu1daqwobdjb.us-east-1.rds.amazonaws.com -u masterusername -p < data.sql (This command connects to the RDS instance and imports the data from the data.sql file).
-	Entered the password when prompted.
-	Verifed that the application is working correctly.
-Task 7: Testing the application
-1.	Edit Cloud9 Script with Instance 2 Endpoint:
-	Opened the previously downloaded Cloud9 script (script 3).
-	Add the private IPv4 address of the first instance to the script.
-	Navigate to RDS Dashboard.
-	Select Databases → project-db.
-	Under Connectivity & security, copy the Endpoint and Port.
-	Edit script to include the RDS endpoint and port. (Updating the script with the new instance endpoint ensures that all components can communicate with the database, enabling a fully functional application environment.)
+  -	Ran the following command in the terminal:
+    -	mysql -h project-db.cu1daqwobdjb.us-east-1.rds.amazonaws.com -u masterusername -p < data.sql (This command connects to the RDS instance and imports the data from the data.sql file).
+  -	Entered the password when prompted.
+  -	Verifed that the application is working correctly.
 
-Phase 4: Implementing High Availability and Scalability
+### Task 7: **Testing the application**
+1.	Edit Cloud9 Script with Instance 2 Endpoint:
+  -	Opened the previously downloaded Cloud9 script (script 3).
+  -	Add the private IPv4 address of the first instance to the script.
+  -	Navigate to RDS Dashboard.
+  -	Select Databases → project-db.
+  -	Under Connectivity & security, copy the Endpoint and Port.
+  -	Edit script to include the RDS endpoint and port. (Updating the script with the new instance endpoint ensures that all components can communicate with the database, enabling a fully functional application environment.)
+
+## Phase 4: **Implementing High Availability and Scalability**
 In this phase, we will complete the design and fulfill the remaining solution requirements. The objective is to use the key components that we created in earlier phases to build a scalable and highly available architecture.
 
-Task 1: Creating an Application Load Balancer
+### Task 1: **Creating an Application Load Balancer**
 We launched a load balancer to access our web application. An Application Load Balancer (ALB) helps distribute incoming application traffic across multiple targets, such as EC2 instances, ensuring high availability and reliability.
 1.	Create an Image from Instance 2
 In the instance 2 we choose action image and templates and created a new image. We only provided name and description for it. 
 Creating an image from an existing instance ensures that the Auto Scaling group launches new instances with the same configuration.
 2.	Create Target Groups
-	Target group name: project-TargetGroup
-	Target type: Instances (The target type specifies that the targets registered to this group will be EC2 instances.)
-	VPC: project-VPC (We select the VPC where the instances are hosted to ensure proper routing.)
-	Health check protocol: HTTP
+  -	Target group name: project-TargetGroup
+  -	Target type: Instances (The target type specifies that the targets registered to this group will be EC2 instances.)
+  -	VPC: project-VPC (We select the VPC where the instances are hosted to ensure proper routing.)
+  -	Health check protocol: HTTP
 
 
 3.	Create an Application Load Balancer
-	Selected Application Load Balancer. (An ALB is designed to handle HTTP and HTTPS traffic, making it ideal for web applications.)
-	Name: project-LoadBalancer
-	Scheme: Internet-facing (An internet-facing load balancer allows our application to be accessible from the internet.
-	IP address type: IPv4
-	VPC: project-VPC
-	Availability Zones: Selected both public subnets (Subnet Public 1 and Subnet Public 2, using multiple availability zones ensures high availability and fault tolerance.)
-	Security group: project-sg
-	Under listeners and routing select our target group: project-TargetGrooup
-	Selected the previously created target group. This ensures that the load balancer routes traffic to the target group containing our instances.
-	Registered both instances (Instance 1 and Instance 2; By distributing traffic across multiple instances, the application becomes more resilient to failures. If one instance becomes unavailable due to issues such as hardware failure or software issues, the ALB automatically routes traffic to the healthy instance, ensuring uninterrupted service.)
-Task 2: Implementing Amazon EC2 Auto Scaling
+  -	Selected Application Load Balancer. (An ALB is designed to handle HTTP and HTTPS traffic, making it ideal for web applications.)
+  -	Name: project-LoadBalancer
+  -	Scheme: Internet-facing (An internet-facing load balancer allows our application to be accessible from the internet.)
+  -	IP address type: IPv4
+  -	VPC: project-VPC
+  -	Availability Zones: Selected both public subnets (Subnet Public 1 and Subnet Public 2, using multiple availability zones ensures high availability and fault tolerance.)
+  -	Security group: project-sg
+  -	Under listeners and routing select our target group: project-TargetGrooup
+  -	Selected the previously created target group. This ensures that the load balancer routes traffic to the target group containing our instances.
+  -	Registered both instances (Instance 1 and Instance 2; By distributing traffic across multiple instances, the application becomes more resilient to failures. If one instance becomes unavailable due to issues such as hardware failure or software issues, the ALB automatically routes traffic to the healthy instance, ensuring uninterrupted service.)
+
+### Task 2: **Implementing Amazon EC2 Auto Scaling**
 Create a new launch template, and use an Auto Scaling group to launch the EC2 instances that host the web application.
+
 1.	Create a Launch Template
-	Provide the following details:
-•	Launch template name: project-LaunchTemplate
-•	Template version description: Version 1
-•	Under AutoScaling guidance enable “Provide guidance to help me set up a template that I can use with EC2 Auto Scaling”
-•	AMI ID: Select the previously created image: project-AMI
-•	Instance type: t2.micro
-•	Key pair: vockey
-•	Security group: project-sg
-•	IAM instance profile: LabInstanceProfile
-•	Advanced details: For IAM instance profile choose LabInstanceProfile and enable “Detailed CloudWatch monitoring”
+  -	Provide the following details:
+    -	Launch template name: project-LaunchTemplate
+    -	Template version description: Version 1
+    -	Under AutoScaling guidance enable “Provide guidance to help me set up a template that I can use with EC2 Auto Scaling”
+    -	AMI ID: Select the previously created image: project-AMI
+    -	Instance type: t2.micro
+    -	Key pair: vockey
+    -	Security group: project-sg
+    -	IAM instance profile: LabInstanceProfile
+    -	Advanced details: For IAM instance profile choose LabInstanceProfile and enable “Detailed CloudWatch monitoring”
 
 2.	Create an Auto Scaling Group
 Auto Scaling in Amazon EC2 is used to automatically adjust the number of EC2 instances in response to the changing demand for our application. Here are the key reasons why we used Auto Scaling: improved fault toleranace, better availability, optimized costs, load management.
-	Select the previously created launch template (project-template).
-	Provide the following details:
-•	Auto Scaling group name: project Auto Scalling Group
-•	VPC: project-VPC
-•	Subnets: Select both private subnets (Subnet Private 1 and Subnet Private 2)
-•	Attach to an existing load balancer: Select our previously created load balancer (project-alb, Attaching the Auto Scaling group to the load balancer ensures that new instances are automatically registered with the load balancer.)
-•	Target group: Select our previously created target group
-•	Enable Group metrics collection within CloudWatch
-	Configure the group size:
-•	Desired capacity: 2
-•	Minimum capacity: 2
-•	Maximum capacity: 6 (These settings ensure that the Auto Scaling group maintains a minimum number of instances for high availability and can scale up to handle increased load.)
-	Enable “Target tracking scaling policy”
-	Configure scaling policies:
-•	Policy type: Target tracking scaling policy
-•	Target value: 60 (By setting the target value to 60 the system aims to keep CPU utilization at or below 60%, ensuring optimal performance without over-provisioning resources)
-	Add tag:
-•	Name: name
-•	Value: group (Tag is a label consisting of a user-defined key and value. Tags help us manage, identify, organize, search for, and filter resources.)
-Task 3: Accessing the Application
-Access the application and perform a few tasks to test it. For example, view, add, delete, and modify student records.
-1.	Verify Load Balancer
-	Copy the DNS name of the created load balancer (project-alb).
-	Paste the DNS name into a browser to verify that the project loads and starts correctly. (Verifying the load balancer's DNS name ensures that our application is accessible and that traffic is properly routed to the instances.)
-Task 4: Load Testing the Application
-Performed a load test on the application to monitor scaling.
-1.	Use Script-2 from the AWS Cloud9 Scripts file (cloud9-scripts.yml):
-	Access the web application from the browser using the load balancer URL.
-	Use AWS Cloud9 to run the load testing scripts against the load balancer.
+  -	Select the previously created launch template (project-template).
+  -	Provide the following details:
+    -	Auto Scaling group name: project Auto Scalling Group
+    -	VPC: project-VPC
+    -	Subnets: Select both private subnets (Subnet Private 1 and Subnet Private 2)
+    -	Attach to an existing load balancer: Select our previously created load balancer (project-alb, Attaching the Auto Scaling group to the load balancer ensures that new instances are automatically registered with the load balancer.)
+    -	Target group: Select our previously created target group
+    -	Enable Group metrics collection within CloudWatch
+  -	Configure the group size:
+    -	Desired capacity: 2
+    -	Minimum capacity: 2
+    -	Maximum capacity: 6 (These settings ensure that the Auto Scaling group maintains a minimum number of instances for high availability and can scale up to handle increased load.)
+  -	Enable “Target tracking scaling policy”
+  -	Configure scaling policies:
+    -	Policy type: Target tracking scaling policy
+    -	Target value: 60 (By setting the target value to 60 the system aims to keep CPU utilization at or below 60%, ensuring optimal performance without over-provisioning resources)
+  -	Add tag:
+    -	Name: name
+    -	Value: group (Tag is a label consisting of a user-defined key and value. Tags help us manage, identify, organize, search for, and filter resources.)
 
-Notes:
+### Task 3: **Accessing the Application**
+Access the application and perform a few tasks to test it. For example, view, add, delete, and modify student records.
+
+1.	Verify Load Balancer
+  -	Copy the DNS name of the created load balancer (project-alb).
+  -	Paste the DNS name into a browser to verify that the project loads and starts correctly. (Verifying the load balancer's DNS name ensures that our application is accessible and that traffic is properly routed to the instances.)
+
+### Task 4: **Load Testing the Application**
+Performed a load test on the application to monitor scaling.
+
+1.	Use Script-2 from the AWS Cloud9 Scripts file (cloud9-scripts.yml):
+  -	Access the web application from the browser using the load balancer URL.
+  -	Use AWS Cloud9 to run the load testing scripts against the load balancer.
+
+**Notes:**
 Ensure that the application runs smoothly and can handle the load efficiently.
 By following these steps, you will ensure that the application is scalable, highly available, and load-balanced, thus providing a robust and reliable user experience.
 
-Conclusion
+**Conclusion**
 This project demonstrates how to build and deploy a scalable, highly available, and secure web application in AWS. It included key AWS services such as EC2, RDS, VPC, Cloud9, Application Load Balancer, and Auto Scaling.
 
-Resources
-https://awsacademy.instructure.com/courses/49302/modules/items/4245907 
-https://docs.aws.amazon.com/pricing-calculator/index.html 
-https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html 
-https://awsacademy.instructure.com/courses/49302/modules/items/4246031 
-https://www.youtube.com/watch?v=aeLdPYGnn_Q 
-https://www.youtube.com/watch?v=4eFV3zyk3V4
-https://awsacademy.instructure.com/courses/49302/modules/items/4246271 
-https://awsacademy.instructure.com/courses/49302/modules/items/4246188
+
+## Resources
+
+- [AWS Academy Course Overview](https://awsacademy.instructure.com/courses/49302/modules/items/4245907)
+- [AWS Pricing Calculator](https://docs.aws.amazon.com/pricing-calculator/index.html)
+- [Application Load Balancers Documentation](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html)
+- [AWS Academy EC2 Auto Scaling](https://awsacademy.instructure.com/courses/49302/modules/items/4246031)
+- [YouTube - AWS Elastic Load Balancing Overview](https://www.youtube.com/watch?v=aeLdPYGnn_Q)
+- [YouTube - AWS Auto Scaling Tutorial](https://www.youtube.com/watch?v=4eFV3zyk3V4)
+- [AWS Academy - Creating and Managing a Load Balancer](https://awsacademy.instructure.com/courses/49302/modules/items/4246271)
+- [AWS Academy - Setting Up Auto Scaling](https://awsacademy.instructure.com/courses/49302/modules/items/4246188)
+
 
